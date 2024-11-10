@@ -9,56 +9,42 @@ using namespace std;
 class AdjacencyMatrix
 {
 public:
-    AdjacencyMatrix(const  string &matrix_file);
+    // Constructor and Destructor
+    AdjacencyMatrix(const string &matrix_file);
     ~AdjacencyMatrix();
 
-    // Initialize matrix for first 100 users
-    void initializeBaseMatrix(const  vector<User *> &users, const  vector< vector<User *>> &communities);
+    // Initialization
+    void initializeBaseMatrix(const vector<User *> &users, const vector<vector<User *>> &communities);
+    void addNewUser(const string &userId); // Add new user to matrix with zero connections
 
-    // Add new user to matrix (with zero connections)
-    void addNewUser(const  string &userId);
+    // Connection Management
+    void updateConnection(const string &user1_id, const string &user2_id, const vector<vector<User *>> &communities);
+    void removeConnection(const string &user1_id, const string &user2_id);
+    double calculateConnectionWeight(User *user1, User *user2, const vector<vector<User *>> &communities);
+    double getConnectionWeight(const string &user1_id, const string &user2_id) const;
 
-    // Update connection weight between two users
-    void updateConnection(const  string &user1_id, const  string &user2_id, const  vector< vector<User *>> &communities);
+    // File Operations
+    void saveToFile(); // Save matrix to CSV
+    void loadFromFile(); // Load matrix from CSV
+    void forceSave(); // Force save changes to file
 
-    // Calculate connection weight based on user similarities
-    double calculateConnectionWeight(User *user1, User *user2, const  vector< vector<User *>> &communities);
-
-    void removeConnection(const  string &user1_id, const  string &user2_id);
-
-    // Save matrix to CSV file
-    void saveToFile();
-
-    // Load matrix from CSV file
-    void loadFromFile();
-
-    // Get connection weight between two users
-    double getConnectionWeight(const  string &user1_id, const  string &user2_id) const;
-
-    const  unordered_map< string, int> &getUserIndexMap() const
-    {
-        return user_index_map;
-    }
-
-    const  vector< vector<double>> &getMatrix() const
-    {
-        return matrix;
-    }
-
-    // Print matrix (for debugging)
-    void printMatrix() const;
-    void forceSave();
+    // Utility Functions
+    const unordered_map<string, int> &getUserIndexMap() const;
+    const vector<vector<double>> &getMatrix() const;
+    void printMatrix() const; // Print matrix (for debugging)
 
 private:
-     string matrix_file_path;
-     vector< string> user_ids;                   // To maintain order of users
-     unordered_map< string, int> user_index_map; // Maps user IDs to matrix indices
-     vector< vector<double>> matrix;             // The adjacency matrix
-    int findCommunityIndex(const  string &user_id, const  vector< vector<User *>> &communities) const;
+    // Data Members
+    string matrix_file_path;
+    vector<string> user_ids; // Order of users
+    unordered_map<string, int> user_index_map; // Maps user IDs to matrix indices
+    vector<vector<double>> matrix; // The adjacency matrix
 
-    bool areInSameCommunity(const  string &user1_id, const  string &user2_id,
-                            const  vector< vector<User *>> &communities) const;
-    bool hasChanges = false;
+    // Helper Functions
+    int findCommunityIndex(const string &user_id, const vector<vector<User *>> &communities) const;
+    bool areInSameCommunity(const string &user1_id, const string &user2_id, const vector<vector<User *>> &communities) const;
+
+    bool hasChanges = false; // Track changes for saving
 };
 
 #endif // ADJACENCY_MATRIX_H

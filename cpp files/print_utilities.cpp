@@ -3,44 +3,50 @@
 
 using namespace std;
 
- vector<int> PrintUtilities::g_validIndices;
+vector<int> PrintUtilities::g_validIndices;
 int PrintUtilities::g_currentStart = 0;
 
+// Function to print top influencers
 void PrintUtilities::printResults(ConnectionManager &cm,
-                                  const  unordered_map< string, double> &pagerank,
-                                  const  vector< vector<User *>> &communities)
+                                  const unordered_map<string, double> &pagerank,
+                                  const vector<vector<User *>> &communities)
 {
-     cout << "Top 5 Influencers:" <<  endl;
-     vector< pair< string, double>> top_influencers;
+    cout << "Top 5 Influencers:" << endl;
+    vector<pair<string, double>> top_influencers;
 
+    // Collecting pagerank data into a vector
     for (const auto &pair : pagerank)
     {
         top_influencers.emplace_back(pair.first, pair.second);
     }
 
-     sort(top_influencers.begin(), top_influencers.end(),
-              [](const auto &a, const auto &b)
-              { return a.second > b.second; });
+    // Sorting the influencers by rank
+    sort(top_influencers.begin(), top_influencers.end(),
+         [](const auto &a, const auto &b) { return a.second > b.second; });
 
+    // Displaying the top influencers
     for (size_t i = 0; i < 5 && i < top_influencers.size(); ++i)
     {
-         cout << "User: " << cm.getUser(top_influencers[i].first)->getName()
-                  << ", Influence: " << top_influencers[i].second <<  endl;
+        cout << "User: " << cm.getUser(top_influencers[i].first)->getName()
+             << ", Influence: " << top_influencers[i].second << endl;
     }
 
-     cout << "\nCommunities:" <<  endl;
+    cout << "\nCommunities:" << endl;
+
+    // Displaying the communities
     for (size_t i = 0; i < communities.size(); ++i)
     {
-         cout << "Community " << i + 1 << ": ";
+        cout << "Community " << i + 1 << ": ";
         for (User *user : communities[i])
         {
-             cout << user->getName() << ", ";
+            cout << user->getName() << ", ";
         }
-         cout <<  endl;
+        cout << endl;
     }
 }
 
-void PrintUtilities::printRecommendedCommunities(const  vector< vector<User *>> &communities,
+// Function to print recommended communities
+void PrintUtilities::printRecommendedCommunities(const vector<vector<User *>> &communities,
                                                  User *new_user)
 {
     int matchingCommunityCount = 0;
@@ -63,20 +69,21 @@ void PrintUtilities::printRecommendedCommunities(const  vector< vector<User *>> 
         if (is_match)
         {
             matchingCommunityCount++;
-             cout << "Community " << matchingCommunityCount << ": ";
+            cout << "Community " << matchingCommunityCount << ": ";
             for (User *user : community)
             {
-                 cout << user->getName() << ", ";
+                cout << user->getName() << ", ";
             }
-             cout <<  endl;
+            cout << endl;
         }
     }
 }
 
-void PrintUtilities::printRecommendedConnections(const  vector< pair<User *, User *>> &recommendations,
+// Function to print recommended connections
+void PrintUtilities::printRecommendedConnections(const vector<pair<User *, User *>> &recommendations,
                                                  User *new_user)
 {
-     cout << "\nRecommended connections based on category and influence:" <<  endl;
+    cout << "\nRecommended connections based on category and influence:" << endl;
     int validIndex = 0;
     g_validIndices.clear();
 
@@ -97,9 +104,9 @@ void PrintUtilities::printRecommendedConnections(const  vector< pair<User *, Use
                 continue;
             }
 
-             cout << validIndex << ": " << pair.first->getName() << " <-> "
-                      << pair.second->getName() << " (Category: " << pair.second->getCategory()
-                      << ", Branch: " << pair.second->getBranch() << ")" <<  endl;
+            cout << validIndex << ": " << pair.first->getName() << " <-> "
+                 << pair.second->getName() << " (Category: " << pair.second->getCategory()
+                 << ", Branch: " << pair.second->getBranch() << ")" << endl;
 
             g_validIndices.push_back(i);
             validIndex++;
@@ -110,27 +117,28 @@ void PrintUtilities::printRecommendedConnections(const  vector< pair<User *, Use
     {
         if (g_currentStart == 0)
         {
-             cout << "No matching recommendations found." <<  endl;
+            cout << "No matching recommendations found." << endl;
         }
         else
         {
-             cout << "No more recommendations available." <<  endl;
+            cout << "No more recommendations available." << endl;
             g_currentStart = 0;
         }
     }
 }
 
-int PrintUtilities::selectConnection(const  vector< pair<User *, User *>> &recommendations)
+// Function to select a connection from recommendations
+int PrintUtilities::selectConnection(const vector<pair<User *, User *>> &recommendations)
 {
     if (g_validIndices.empty())
     {
         return -1;
     }
 
-     cout << "\nSelect a connection to add (enter number 0-" << g_validIndices.size() - 1
-              << ", or -1 to skip, or any other negative number to exit): ";
+    cout << "\nSelect a connection to add (enter number 0-" << g_validIndices.size() - 1
+         << ", or -1 to skip, or any other negative number to exit): ";
     int displayIndex;
-     cin >> displayIndex;
+    cin >> displayIndex;
 
     if (displayIndex == -1)
     {
@@ -149,6 +157,6 @@ int PrintUtilities::selectConnection(const  vector< pair<User *, User *>> &recom
         return g_validIndices[displayIndex];
     }
 
-     cout << "Invalid selection. Please try again." <<  endl;
+    cout << "Invalid selection. Please try again." << endl;
     return selectConnection(recommendations);
 }

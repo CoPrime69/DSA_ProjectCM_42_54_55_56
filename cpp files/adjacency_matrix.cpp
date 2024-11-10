@@ -3,6 +3,20 @@
 
 using namespace std;
 
+// Static Helper Functions
+static mt19937 &getRNG()
+{
+    static mt19937 rng(time(nullptr));
+    return rng;
+}
+
+// Helper function to get a random weight from normal distribution
+static double getRandomWeight(double mean, double stddev = 2.5)
+{
+    normal_distribution<double> distribution(mean, stddev);
+    return distribution(getRNG());
+}
+
 AdjacencyMatrix::AdjacencyMatrix(const string &matrix_file) : matrix_file_path(matrix_file)
 {
     loadFromFile();
@@ -15,19 +29,6 @@ AdjacencyMatrix::~AdjacencyMatrix()
     {
         saveToFile();
     }
-}
-
-static mt19937 &getRNG()
-{
-    static mt19937 rng(time(nullptr));
-    return rng;
-}
-
-// Helper function to get a random weight from normal distribution
-static double getRandomWeight(double mean, double stddev = 2.5)
-{
-    normal_distribution<double> distribution(mean, stddev);
-    return distribution(getRNG());
 }
 
 void AdjacencyMatrix::initializeBaseMatrix(const vector<User *> &users,
@@ -163,14 +164,14 @@ double AdjacencyMatrix::calculateConnectionWeight(User *user1, User *user2,
 
     // Base similarity checks
     if (user1->getCategory() == user2->getCategory())
-        weight += getRandomWeight(8.0);
+        weight += getRandomWeight(6.0);
     if (user1->getBranch() == user2->getBranch())
-        weight += getRandomWeight(9.0);
+        weight += getRandomWeight(5.0);
 
     // Community based weight
     if (areInSameCommunity(user1->getID(), user2->getID(), communities))
     {
-        weight += getRandomWeight(13.0);
+        weight += getRandomWeight(17.0);
     }
 
     // Influence similarity (normalized)
@@ -319,6 +320,15 @@ void AdjacencyMatrix::printMatrix() const
     }
 }
 
+bool AdjacencyMatrix::areInSameCommunity(const string &user1_id, const string &user2_id,
+                                         const vector<vector<User *>> &communities) const
+{
+    int comm1 = findCommunityIndex(user1_id, communities);
+    int comm2 = findCommunityIndex(user2_id, communities);
+
+    return comm1 == comm2;
+}
+
 int AdjacencyMatrix::findCommunityIndex(const string &user_id,
                                         const vector<vector<User *>> &communities) const
 {
@@ -332,15 +342,8 @@ int AdjacencyMatrix::findCommunityIndex(const string &user_id,
             }
         }
     }
-    return -1;
-}
 
-bool AdjacencyMatrix::areInSameCommunity(const string &user1_id, const string &user2_id,
-                                         const vector<vector<User *>> &communities) const
-{
-    int community1 = findCommunityIndex(user1_id, communities);
-    int community2 = findCommunityIndex(user2_id, communities);
-    return (community1 != -1 && community1 == community2);
+    return -1;
 }
 
 void AdjacencyMatrix::forceSave()

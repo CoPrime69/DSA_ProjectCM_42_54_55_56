@@ -5,32 +5,37 @@
 
 using namespace std;
 
-class GraphTraversal {
+class GraphTraversal
+{
 public:
-    template<typename ProcessNode, typename ProcessEdge>
+    template <typename ProcessNode, typename ProcessEdge>
     static void bfs(
-        const unordered_map<string, vector<string>>& graph,
-        const string& start_id,
+        const unordered_map<string, vector<string>> &graph,
+        const string &start_id,
         ProcessNode process_node,
-        ProcessEdge process_edge
-    ) {
+        ProcessEdge process_edge)
+    {
         unordered_map<string, bool> visited;
         queue<string> queue;
-        
+
         visited[start_id] = true;
         queue.push(start_id);
-        
-        while (!queue.empty()) {
+
+        while (!queue.empty())
+        {
             string current = queue.front();
             queue.pop();
-            
+
             process_node(current);
-            
-            if (graph.find(current) != graph.end()) {
-                for (const auto& neighbor : graph.at(current)) {
+
+            if (graph.find(current) != graph.end())
+            {
+                for (const auto &neighbor : graph.at(current))
+                {
                     process_edge(current, neighbor);
-                    
-                    if (!visited[neighbor]) {
+
+                    if (!visited[neighbor])
+                    {
                         visited[neighbor] = true;
                         queue.push(neighbor);
                     }
@@ -38,68 +43,76 @@ public:
             }
         }
     }
-    
+
     static unordered_map<string, double> bfsDistance(
-        const unordered_map<string, vector<string>>& graph,
-        const string& start_id
-    ) {
+        const unordered_map<string, vector<string>> &graph,
+        const string &start_id)
+    {
         unordered_map<string, double> distances;
-        
+
         bfs(
             graph,
             start_id,
-            [&](const string& node) {
-                if (distances.find(node) == distances.end()) {
+            [&](const string &node)
+            {
+                if (distances.find(node) == distances.end())
+                {
                     distances[node] = node == start_id ? 0.0 : numeric_limits<double>::max();
                 }
             },
-            [&](const string& from, const string& to) {
+            [&](const string &from, const string &to)
+            {
                 double new_dist = distances[from] + 1;
-                if (new_dist < distances[to]) {
+                if (new_dist < distances[to])
+                {
                     distances[to] = new_dist;
                 }
-            }
-        );
-        
+            });
+
         return distances;
     }
-    
+
     static vector<string> bfsPath(
-        const unordered_map<string, vector<string>>& graph,
-        const string& start_id,
-        const string& end_id
-    ) {
+        const unordered_map<string, vector<string>> &graph,
+        const string &start_id,
+        const string &end_id)
+    {
         unordered_map<string, string> predecessors;
         bool found = false;
-        
+
         bfs(
             graph,
             start_id,
-            [&](const string& node) {
-                if (node == end_id) {
+            [&](const string &node)
+            {
+                if (node == end_id)
+                {
                     found = true;
                 }
             },
-            [&](const string& from, const string& to) {
-                if (predecessors.find(to) == predecessors.end()) {
+            [&](const string &from, const string &to)
+            {
+                if (predecessors.find(to) == predecessors.end())
+                {
                     predecessors[to] = from;
                 }
-            }
-        );
-        
-        if (!found) {
+            });
+
+        if (!found)
+        {
             return vector<string>();
         }
-        
+
         vector<string> path;
         string current = end_id;
-        while (current != start_id) {
+        while (current != start_id)
+        {
             path.push_back(current);
             current = predecessors[current];
         }
         path.push_back(start_id);
         reverse(path.begin(), path.end());
-        
+
         return path;
     }
 };
@@ -241,109 +254,127 @@ double ConnectionManager::getConnectionWeight(const string &user1_id, const stri
     return adjacency_matrix->getConnectionWeight(user1_id, user2_id);
 }
 
-unordered_map<string, double> ConnectionManager::calculateBetweennessCentrality() {
+unordered_map<string, double> ConnectionManager::calculateBetweennessCentrality()
+{
     unordered_map<string, double> betweenness;
-    
-    #pragma omp parallel
+
+#pragma omp parallel
     {
         unordered_map<string, double> local_betweenness;
-        
-        #pragma omp for schedule(dynamic)
-        for (size_t i = 0; i < users.size(); i++) {
-            const auto& user = users[i];
+
+#pragma omp for schedule(dynamic)
+        for (size_t i = 0; i < users.size(); i++)
+        {
+            const auto &user = users[i];
             queue<string> queue;
             unordered_map<string, double> distance;
             unordered_map<string, vector<string>> predecessors;
             stack<string> stack;
             unordered_map<string, double> dependency;
-            
-            for (const auto& u : users) {
+
+            for (const auto &u : users)
+            {
                 distance[u->getID()] = numeric_limits<double>::max();
             }
-            
+
             distance[user->getID()] = 0;
             queue.push(user->getID());
-            
+
             // Forward pass - shortest paths calculation
-            while (!queue.empty()) {
+            while (!queue.empty())
+            {
                 string curr = queue.front();
                 queue.pop();
                 stack.push(curr);
-                
-                for (const auto& neighbor_id : connections[curr]) {
-                    if (distance[neighbor_id] == numeric_limits<double>::max()) {
+
+                for (const auto &neighbor_id : connections[curr])
+                {
+                    if (distance[neighbor_id] == numeric_limits<double>::max())
+                    {
                         queue.push(neighbor_id);
                         distance[neighbor_id] = distance[curr] + 1;
                     }
-                    if (distance[neighbor_id] == distance[curr] + 1) {
+                    if (distance[neighbor_id] == distance[curr] + 1)
+                    {
                         predecessors[neighbor_id].push_back(curr);
                     }
                 }
             }
-            
+
             // Backward pass - dependency accumulation
-            while (!stack.empty()) {
+            while (!stack.empty())
+            {
                 string w = stack.top();
                 stack.pop();
-                
-                for (const auto& v : predecessors[w]) {
+
+                for (const auto &v : predecessors[w])
+                {
                     double factor = (1.0 + dependency[w]) / predecessors[w].size();
                     dependency[v] += factor;
                 }
-                
-                if (w != user->getID()) {
+
+                if (w != user->getID())
+                {
                     local_betweenness[w] += dependency[w];
                 }
             }
         }
-        
-        #pragma omp critical
+
+#pragma omp critical
         {
-            for (const auto& pair : local_betweenness) {
+            for (const auto &pair : local_betweenness)
+            {
                 betweenness[pair.first] += pair.second;
             }
         }
     }
-    
+
     return betweenness;
 }
 
-unordered_map<string, double> ConnectionManager::calculateClosenessCentrality() {
+unordered_map<string, double> ConnectionManager::calculateClosenessCentrality()
+{
     unordered_map<string, double> closeness;
-    
-    #pragma omp parallel
+
+#pragma omp parallel
     {
         unordered_map<string, double> local_closeness;
-        
-        #pragma omp for schedule(dynamic)
-        for (size_t i = 0; i < users.size(); i++) {
-            const auto& user = users[i];
+
+#pragma omp for schedule(dynamic)
+        for (size_t i = 0; i < users.size(); i++)
+        {
+            const auto &user = users[i];
             auto distances = GraphTraversal::bfsDistance(connections, user->getID());
-            
+
             double total_distance = 0.0;
             int reachable_nodes = 0;
-            
-            for (const auto& dist : distances) {
-                if (dist.second != numeric_limits<double>::max()) {
+
+            for (const auto &dist : distances)
+            {
+                if (dist.second != numeric_limits<double>::max())
+                {
                     total_distance += dist.second;
                     reachable_nodes++;
                 }
             }
-            
+
             // Normalize by number of reachable nodes
-            if (reachable_nodes > 1) { // Exclude self from count
+            if (reachable_nodes > 1)
+            { // Exclude self from count
                 local_closeness[user->getID()] = (reachable_nodes - 1) / total_distance;
-            } else {
+            }
+            else
+            {
                 local_closeness[user->getID()] = 0.0;
             }
         }
-        
-        #pragma omp critical
+
+#pragma omp critical
         {
             closeness.insert(local_closeness.begin(), local_closeness.end());
         }
     }
-    
+
     return closeness;
 }
 
@@ -553,8 +584,8 @@ unordered_map<string, double> ConnectionManager::calculatePageRank()
 
 vector<vector<User *>> ConnectionManager::detectCommunities()
 {
-    const int TARGET_COMMUNITY_SIZE = users.size() / 10;      // Aim for roughly 10 communities
-    const int MAX_COMMUNITY_SIZE = TARGET_COMMUNITY_SIZE * 2; // Allow some flexibility
+    const int TARGET_COMMUNITY_SIZE = users.size() / 10;       // Aim for roughly 10 communities
+    const int MAX_COMMUNITY_SIZE = floor(users.size() * 0.14); // Allow some flexibility
 
     vector<vector<User *>> communityGroups;
     unordered_map<string, int> communities; // maps user ID to community ID
@@ -573,9 +604,15 @@ vector<vector<User *>> ConnectionManager::detectCommunities()
     int currentCommunity = 0;
     vector<User *> currentGroup;
 
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> dis(static_cast<int>(MAX_COMMUNITY_SIZE) - 4, static_cast<int>(MAX_COMMUNITY_SIZE) + 4);
+
     for (User *user : sortedUsers)
     {
-        if (currentGroup.size() >= MAX_COMMUNITY_SIZE)
+        int random_max_size = dis(gen); // Generate a random number within the range
+
+        if (currentGroup.size() >= random_max_size)
         {
             if (!currentGroup.empty())
             {
@@ -801,6 +838,10 @@ vector<pair<User *, User *>> ConnectionManager::recommendConnectionsForNewUser(U
             if (user->getBranch() == new_user->getBranch())
             {
                 final_score += 0.1;
+            }
+            if (community_map[user->getID()] == community_map[new_user->getID()])
+            {
+                final_score += 0.3;
             }
 
             // Use negative score for sorting in descending order
