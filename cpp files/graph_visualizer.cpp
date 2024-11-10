@@ -217,15 +217,17 @@ string GraphVisualizer::generateDotFormat(
     dot << "\n";
 
     // Add edges with constraints to keep within main graph area
+    int edge_count = 0;
     for (size_t i = 0; i < matrix.size(); i++) {
         for (size_t j = i + 1; j < matrix[i].size(); j++) {
             bool exceedsThreshold = (matrix[i][j] >= weight_threshold);
 
             if (exceedsThreshold) {
-                double len = 4.0 / matrix[i][j];
+                double len = min(0.3, 19.0 / matrix[i][j]);
                 dot << "    \"" << user_ids[i] << "\" -- \"" << user_ids[j] 
                     << "\" [len=" << len
                     << ", penwidth=2.5];\n";
+                edge_count++;
             }
         }
     }
@@ -236,6 +238,8 @@ string GraphVisualizer::generateDotFormat(
         dot << "\"" << user_id << "\"; ";
     }
     dot << "}\n";
+    cout << "Number of edges: " << edge_count << endl <<endl;
+
 
     dot << "}\n";
     return dot.str();
