@@ -1,4 +1,4 @@
-# Social Netowrk Manager
+# Social Network Manager
 
 ## Overview
 
